@@ -3,7 +3,7 @@ public class Seat {
 	public static final int SYMBOL_OCCUPIED = '*';
 	public static final int SYMBOL_FREE = '.';
 	private boolean isOccupied;
-	private boolean centralPersonHasSat;
+	private boolean isUsedByCentral;
 	private char symbol;
 	private Person person;
 
@@ -49,12 +49,12 @@ public class Seat {
 		this.symbol = symbol;
 	}
 
-	public boolean isCentralPersonHasSat() {
-		return centralPersonHasSat;
+	public boolean isUsedByCentral() {
+		return isUsedByCentral;
 	}
 
-	public void setCentralPersonHasSat(boolean centralPersonHasSat) {
-		this.centralPersonHasSat = centralPersonHasSat;
+	public void setUsedByCentral(boolean centralPersonHasSat) {
+		this.isUsedByCentral = centralPersonHasSat;
 	}
 
 }

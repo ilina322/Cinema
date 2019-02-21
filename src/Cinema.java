@@ -27,33 +27,47 @@ public class Cinema {
 		}
 
 		// logic
+		int startRow = 0;
+		int startCol = 0;
 
-		if (placeAll(cinema, people)) {
-			System.out.println();
-			for (int row = 0; row < rows; row++) {
-				for (int col = 0; col < cols; col++) {
-
-					System.out.print(cinema[row][col].getSymbol());
-				}
+		while (startRow*startCol != cinema.length*cinema[0].length) {
+			if (placeAll(cinema, people, startRow, startCol)) {
 				System.out.println();
+				for (int row = 0; row < rows; row++) {
+					for (int col = 0; col < cols; col++) {
+						System.out.print(cinema[row][col].getSymbol());
+					}
+					System.out.println();
+				}
+				startCol = people.get(0).getCinemaCol() + 1;
+				if (startCol == cinema.length) {
+					startRow = people.get(0).getCinemaRow() + 1;
+					startCol = 0;
+				} else {
+					startRow = people.get(0).getCinemaRow();
+				}
 			}
+			restartCinema(cinema);
 		}
 	}
 
-	private static boolean placeAll(Seat[][] cinema, ArrayList<Person> people) {
+	private static boolean placeAll(Seat[][] cinema, ArrayList<Person> people, int startRow, int startCol) {
 
-		for (int row = 0; row < cinema.length; row++) {
-			for (int col = 0; col < cinema[0].length; col++) {
+		for (int row = startRow; row < cinema.length; row++) {
+			for (int col = startCol; col < cinema[0].length; col++) {
 				int seatedPeopleCount = 0;
 
 				outer: for (int i = 0; i < people.size(); i++) {
 					Person currentPerson = people.get(i);
 
 					if (currentPerson.isCentral()) {
-						cinema[row][col].setPerson(currentPerson);
-						currentPerson.setCinemaCol(col);
-						currentPerson.setCinemaRow(row);
-						seatedPeopleCount++;
+						Seat currentSeat = cinema[row][col];
+						if (!currentSeat.isOccupied()) {
+							currentSeat.setPerson(currentPerson);
+							currentPerson.setCinemaCol(col);
+							currentPerson.setCinemaRow(row);
+							seatedPeopleCount++;
+						}
 					}
 					for (int j = 0; j < people.size(); j++) {
 						Person nextPerson = people.get(j);
@@ -72,6 +86,9 @@ public class Cinema {
 				}
 				if (seatedPeopleCount == people.size()) {
 					return true;
+				}
+				if (col == cinema[0].length - 1) {
+					startCol = 0;
 				}
 			}
 		}
