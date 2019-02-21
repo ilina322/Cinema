@@ -1,5 +1,4 @@
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.Scanner;
 
 public class Cinema {
@@ -7,127 +6,149 @@ public class Cinema {
 	public static void main(String[] args) {
 		// input/setup elements
 		Scanner scanner = new Scanner(System.in);
-		 System.out.println("cinema dimentions:");
+		// System.out.println("cinema dimentions:");
 		String dimensions = scanner.nextLine();
 
 		String dimentionsRaw[] = dimensions.split(" ");
 		int rows = Integer.parseInt(dimentionsRaw[0]);
 		int cols = Integer.parseInt(dimentionsRaw[1]);
 
-		 System.out.println("cinema:");
+		// System.out.println("cinema:");
 		Seat[][] cinema = setupCinema(scanner, rows, cols);
 
-		System.out.println("How many people?");
+		// System.out.println("How many people?");
 		int peopleCount = Integer.parseInt(scanner.nextLine());
 
-		System.out.println("People:");
+		// System.out.println("People:");
 		ArrayList<Person> people = setupPeople(scanner, peopleCount);
 		Person[] peopleUnaltered = new Person[peopleCount];
-		for(int i = 0; i < people.size(); i++) {
+		for (int i = 0; i < people.size(); i++) {
 			peopleUnaltered[i] = people.get(i);
 		}
 
 		// logic
 
-		int startRow = 0;
-		int startCol = 0;
-		while (people.size() != 0) {
-			people.clear();
-			for(int i = 0; i < peopleCount; i++) {
-				people.add(peopleUnaltered[i]);
-			}
-			for(int i = 0; i < rows; i++) {
-				for(int j = 0; j < cols; j++) {
-					if(cinema[i][j].getPerson() != null) {
-						cinema[i][j].setOccupied(false);
-					}
-				}
-			}
-			placeAll(cinema, people, startRow, startCol);
-			startCol++;
-			if(startCol == cols) {
-				startCol = 0;
-				startRow++;
-			}
-		}
-
-		System.out.println();
-		for (int row = 0; row < rows; row++) {
-			for (int col = 0; col < cols; col++) {
-
-				System.out.print(cinema[row][col].getSymbol());
-			}
+		if (placeAll(cinema, people)) {
 			System.out.println();
+			for (int row = 0; row < rows; row++) {
+				for (int col = 0; col < cols; col++) {
+
+					System.out.print(cinema[row][col].getSymbol());
+				}
+				System.out.println();
+			}
 		}
 	}
 
-	private static void placeAll(Seat[][] cinema, ArrayList<Person> people, int startRow, int startCol) {
-		for (int row = startRow; row < cinema.length; row++) {
-			for (int col = startCol; col < cinema[0].length; col++) {
-				Seat currentSeat = cinema[row][col];
+	private static boolean placeAll(Seat[][] cinema, ArrayList<Person> people) {
 
-				if (!currentSeat.isOccupied()) {
-					for (int k = 0; k < people.size(); k++) {
-						Person person = people.get(0);
+		for (int row = 0; row < cinema.length; row++) {
+			for (int col = 0; col < cinema[0].length; col++) {
+				int seatedPeopleCount = 0;
 
-						// TODO: break and delete array if something is wrong
-						if (person.isCentral()) {
-							currentSeat.setPerson(person);
-							people.remove(person);
-							row = 0;
-							col = 0;
-						} else {
-							boolean isPositionOk = checkPosition(person, cinema, row, col);
-							if (isPositionOk) {
-								currentSeat.setPerson(person);
-								people.remove(person);
-								row = 0;
-								col = 0;
+				outer: for (int i = 0; i < people.size(); i++) {
+					Person currentPerson = people.get(i);
+
+					if (currentPerson.isCentral()) {
+						cinema[row][col].setPerson(currentPerson);
+						currentPerson.setCinemaCol(col);
+						currentPerson.setCinemaRow(row);
+						seatedPeopleCount++;
+					}
+					for (int j = 0; j < people.size(); j++) {
+						Person nextPerson = people.get(j);
+						if (nextPerson.getNearbyPersonName() == currentPerson.getName()) {
+
+							char position = nextPerson.getRelevantPosition();
+							if (putNear(cinema, position, currentPerson, nextPerson)) {
+								seatedPeopleCount++;
+							} else {
+								restartCinema(cinema);
+								seatedPeopleCount = 0;
+								break outer;
 							}
 						}
 					}
 				}
-			}
-		}
-	}
-
-	private static boolean checkPosition(Person person, Seat[][] cinema, int row, int col) {
-		if (person.getRelevantPosition() == Person.POSITION_ABOVE) {
-			if (row + 1 < cinema.length) {
-				Person personBelow = cinema[row + 1][col].getPerson();
-				if (personBelow != null && personBelow.getName() == person.getNearbyPersonName()) {
-					return true;
-				}
-			}
-		}
-
-		if (person.getRelevantPosition() == Person.POSITION_BELOW) {
-			if (row - 1 >= 0) {
-				Person personAbove = cinema[row - 1][col].getPerson();
-				if (personAbove != null && personAbove.getName() == person.getNearbyPersonName()) {
-					return true;
-				}
-			}
-		}
-
-		if (person.getRelevantPosition() == Person.POSITION_LEFT) {
-			if (col + 1 < cinema[0].length) {
-				Person personRight = cinema[row][col + 1].getPerson();
-				if (personRight != null && personRight.getName() == person.getNearbyPersonName()) {
-					return true;
-				}
-			}
-		}
-
-		if (person.getRelevantPosition() == Person.POSITION_RIGHT) {
-			if (col - 1 >= 0) {
-				Person personLeft = cinema[row][col - 1].getPerson();
-				if (personLeft != null && personLeft.getName() == person.getNearbyPersonName()) {
+				if (seatedPeopleCount == people.size()) {
 					return true;
 				}
 			}
 		}
 		return false;
+	}
+
+	private static boolean putNear(Seat[][] cinema, char position, Person currentPerson, Person nextPerson) {
+		if (position == Person.POSITION_ABOVE) {
+			return putAbove(cinema, currentPerson, nextPerson);
+		} else if (position == Person.POSITION_BELOW) {
+			return putBelow(cinema, currentPerson, nextPerson);
+		} else if (position == Person.POSITION_RIGHT) {
+			return putRight(cinema, currentPerson, nextPerson);
+		} else if (position == Person.POSITION_LEFT) {
+			return putLeft(cinema, currentPerson, nextPerson);
+		}
+		return false;
+	}
+
+	private static boolean putRight(Seat[][] cinema, Person currentPerson, Person nextPerson) {
+		// TODO: maybe extract method
+		int row = currentPerson.getCinemaRow();
+		int col = currentPerson.getCinemaCol() + 1;
+		if (col < cinema[0].length && !cinema[row][col].isOccupied()) {
+			cinema[row][col].setPerson(nextPerson);
+			nextPerson.setCinemaCol(col);
+			nextPerson.setCinemaRow(row);
+			return true;
+		}
+		return false;
+	}
+
+	private static boolean putLeft(Seat[][] cinema, Person currentPerson, Person nextPerson) {
+		int row = currentPerson.getCinemaRow();
+		int col = currentPerson.getCinemaCol() - 1;
+		if (col >= 0 && !cinema[row][col].isOccupied()) {
+			cinema[row][col].setPerson(nextPerson);
+			nextPerson.setCinemaCol(col);
+			nextPerson.setCinemaRow(row);
+			return true;
+		}
+		return false;
+	}
+
+	private static boolean putBelow(Seat[][] cinema, Person currentPerson, Person nextPerson) {
+		int row = currentPerson.getCinemaRow() + 1;
+		int col = currentPerson.getCinemaCol();
+		if (row < cinema.length && !cinema[row][col].isOccupied()) {
+			cinema[row][col].setPerson(nextPerson);
+			nextPerson.setCinemaCol(col);
+			nextPerson.setCinemaRow(row);
+			return true;
+		}
+		return false;
+	}
+
+	private static boolean putAbove(Seat[][] cinema, Person currentPerson, Person nextPerson) {
+		int row = currentPerson.getCinemaRow() - 1;
+		int col = currentPerson.getCinemaCol();
+		if (row >= 0 && !cinema[row][col].isOccupied()) {
+			cinema[row][col].setPerson(nextPerson);
+			nextPerson.setCinemaCol(col);
+			nextPerson.setCinemaRow(row);
+			return true;
+		}
+		return false;
+	}
+
+	private static void restartCinema(Seat[][] cinema) {
+		for (int i = 0; i < cinema.length; i++) {
+			for (int j = 0; j < cinema[0].length; j++) {
+				Person person = cinema[i][j].getPerson();
+				if (person != null) {
+					cinema[i][j].setOccupied(false);
+				}
+			}
+		}
 	}
 
 	private static ArrayList<Person> setupPeople(Scanner scanner, int peopleCount) {

@@ -1,4 +1,4 @@
-import java.lang.reflect.Constructor;
+
 
 public class Person {
 	public static final char POSITION_ABOVE = 'A';
@@ -10,6 +10,8 @@ public class Person {
 	private char relevantPosition;
 	private char nearbyPersonName;
 	private boolean isCentral;
+	private int cinemaRow;
+	private int cinemaCol;
 	
 	public Person(char name, char relevantPosition, char nearbyPerson) {
 		super();
@@ -19,6 +21,22 @@ public class Person {
 		this.isCentral = false;
 	}
 	
+	public int getCinemaRow() {
+		return cinemaRow;
+	}
+
+	public void setCinemaRow(int cinemaRow) {
+		this.cinemaRow = cinemaRow;
+	}
+
+	public int getCinemaCol() {
+		return cinemaCol;
+	}
+
+	public void setCinemaCol(int cinemaCol) {
+		this.cinemaCol = cinemaCol;
+	}
+
 	public Person(char name) {
 		super();
 		this.name = name;
